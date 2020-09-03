@@ -136,12 +136,16 @@ class Promocodes
      * @return bool|Promocode
      * @throws InvalidPromocodeException
      */
-    public function check($code)
+    public function check($code,$user_id=null)
     {
         $promocode = Promocode::byCode($code)->first();
 
         if ($promocode === null) {
             throw new InvalidPromocodeException;
+        }
+
+        if ($this->isSecondUsageAttempt($promocode,$user_id)) {
+            throw new AlreadyUsedException;
         }
 
         if ($promocode->isExpired() || ($promocode->isDisposable() && $promocode->users()->exists()) || $promocode->isOverAmount()) {
