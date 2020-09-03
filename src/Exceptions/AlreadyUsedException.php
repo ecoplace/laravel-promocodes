@@ -9,7 +9,7 @@ class AlreadyUsedException extends Exception
     /**
      * @var string
      */
-    protected $message = 'Promotion code is already used by current user.';
+    protected $message = 'You have already redeemed this code. This promotion can only be used once.';
 
     /**
      * @var int
