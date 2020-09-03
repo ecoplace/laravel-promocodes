@@ -156,23 +156,27 @@ class Promocodes
      *
      * @param string $code
      *
+     * @param null $user_id
      * @return bool|Promocode
      * @throws AlreadyUsedException
      * @throws UnauthenticatedException
      */
-    public function apply($code)
+    public function apply($code,$user_id=null)
     {
-        if (!auth()->check()) {
+        if (!auth()->check() && !$user_id) {
             throw new UnauthenticatedException;
         }
 
+        if(!$user_id)
+            $user_id = auth()->id();
+
         try {
             if ($promocode = $this->check($code)) {
-                if ($this->isSecondUsageAttempt($promocode)) {
+                if ($this->isSecondUsageAttempt($promocode,$user_id)) {
                     throw new AlreadyUsedException;
                 }
 
-                $promocode->users()->attach(auth()->id(), [
+                $promocode->users()->attach($user_id, [
                     'promocode_id' => $promocode->id,
                     'used_at' => Carbon::now(),
                 ]);
@@ -196,13 +200,14 @@ class Promocodes
      *
      * @param string $code
      *
+     * @param null $user_id
      * @return bool|Promocode
      * @throws AlreadyUsedException
      * @throws UnauthenticatedException
      */
-    public function redeem($code)
+    public function redeem($code,$user_id=null)
     {
-        return $this->apply($code);
+        return $this->apply($code,$user_id);
     }
 
     /**
@@ -328,11 +333,12 @@ class Promocodes
      *
      * @param Promocode $promocode
      *
+     * @param $user_id
      * @return bool
      */
-    public function isSecondUsageAttempt(Promocode $promocode)
+    public function isSecondUsageAttempt(Promocode $promocode,$user_id)
     {
         return $promocode->users()->wherePivot(config('promocodes.related_pivot_key', 'user_id'),
-            auth()->id())->exists();
+            $user_id)->exists();
     }
 }
